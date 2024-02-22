@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken');
 module.exports = async (request, response, next) => {
     try  {
         const token = await request.headers.authorization.split(" ")[1];
-        const decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
-        const user = await decodedToken;
+        const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+        const user = decodedToken;
         request.user = user;
         next();
     } catch (error) {
