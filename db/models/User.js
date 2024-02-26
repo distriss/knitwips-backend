@@ -17,6 +17,14 @@ const UserSchema = new mongoose.Schema({
         required: [true, "Please provide a Password."],
         unique: false,
     },
+    following:  [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
+    followers:  [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
     isAdmin: {
         type: Boolean,
         required: true,

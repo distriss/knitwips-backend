@@ -21,6 +21,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (user) {
         const token = generateToken({ userId: user._id, userEmail: user.email });
+
         res.status(201).send({
             message: "User Created Successfully",
             user: {
@@ -57,11 +58,13 @@ const authUser = asyncHandler(async(req, res) => {
     
         res.status(200).send({
             message: "Login Successful",
-            _id: user._id,
-            username: user.username,
-            email: user.email,
-            isAdmin: user.isAdmin,
-            token,
+            user: {
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                isAdmin: user.isAdmin,
+            },
+            token, 
         });
 
     } catch (error) {
@@ -73,4 +76,26 @@ const authUser = asyncHandler(async(req, res) => {
     }
 })
 
-module.exports = { registerUser, authUser }
+// User Profile
+const getProfile = asyncHandler(async(req, res) => {
+    try {
+        const { username } = req.params;
+        const user = await User.findOne({ username }).select('-password -email -isAdmin');
+        if (!user) {
+            res.status(404).send({ message: "User not found" });
+            return;
+        }
+
+        res.status(200).json({
+            user: {
+                _id: user._id,
+                username: user.username,
+            },
+        });
+    } catch (error) {
+
+    }
+    
+})
+
+module.exports = { registerUser, authUser, getProfile }

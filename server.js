@@ -32,13 +32,6 @@ app.get("/authtest", auth, (req, res) => {
     res.json({ message: "You are authorized." });
 });
 
-app.get("/profile/:username", auth, async (req, res) => {
-    const { username } = req.params;
-    const user = await User.findOne({ username });
-    console.log(user)
-
-});
-
 app.use('/users', userRoutes)
 
 app.use(notFound);
