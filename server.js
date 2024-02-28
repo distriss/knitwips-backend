@@ -21,6 +21,10 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization',]
 }));
 
+app.get("/token/validate", auth, (req, res) => {
+    res.status(200).json({ message: "Token is valid." });
+});
+
 app.get("/", (req, res, next) => {
     res.json({ message: "Server is Live" });
     next();
@@ -34,7 +38,7 @@ app.get("/authtest", auth, (req, res) => {
     res.json({ message: "You are authorized." });
 });
 
-app.use('/users', userRoutes)
+app.use("/users", userRoutes)
 
 app.use(notFound);
 app.use(errorHandler);
