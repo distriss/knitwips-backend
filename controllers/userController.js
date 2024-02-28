@@ -28,6 +28,8 @@ const registerUser = asyncHandler(async (req, res) => {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
+                following: user.following,
+                followers: user.followers,
                 isAdmin: user.isAdmin,
             },
             token, 
@@ -62,6 +64,8 @@ const authUser = asyncHandler(async(req, res) => {
                 _id: user._id,
                 username: user.username,
                 email: user.email,
+                following: user.following,
+                followers: user.followers,
                 isAdmin: user.isAdmin,
             },
             token, 
@@ -70,7 +74,7 @@ const authUser = asyncHandler(async(req, res) => {
     } catch (error) {
         console.error("Login error:", error);
         return res.status(500).send({
-            message: "An error occurd during the login process",
+            message: "An error occurred during the login process",
             error: error.message,
         });
     }
@@ -80,29 +84,32 @@ const authUser = asyncHandler(async(req, res) => {
 const getProfile = asyncHandler(async(req, res) => {
     try {
         const { username } = req.params;
-        const user = await User.findOne({ username }).select('-password -email -isAdmin');
+        const user = await User.findOne({ username })
         if (!user) {
             res.status(404).send({ message: "User not found" });
             return;
         }
 
         res.status(200).json({
+            message: "Fetching Profile Successful",
             user: {
                 _id: user._id,
                 username: user.username,
+                following: user.following,
+                followers: user.followers,
             },
         });
     } catch (error) {
         console.error("Error getting User Profile:", error);
         return res.status(500).send({
-            message: "An error occurd getting User Profile",
+            message: "An error occurred getting User Profile",
             error: error.message,
         });
     }
     
 })
 
-// Follow & Unfollow
+// Follow User
 const followUser = asyncHandler(async(req, res) => {
     try {
         const { username } = req.params;
@@ -113,44 +120,45 @@ const followUser = asyncHandler(async(req, res) => {
             return res.status(404).send({ message: "Authenticated user not found" });
         }       
 
-        const targetUser = await User.findById(userId);
-        if (!targetUser) {
-            return res.status(404).send({ message: "Target user not found" });        
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ message: "User not found" });        
         }
 
-        if (targetUser._id.toString() === authUser._id.toString()) {
+        if (user._id.toString() === authUser._id.toString()) {
             return res.status(400).send({ message: "You can't follow yourself"});
         }
 
-        if (authUser.following.includes(targetUser._id)) {
+        if (authUser.following.includes(user._id)) {
             return res.status(400).send({ message: "You are already following this user" });
         }        
 
-        authUser.following.push(targetUser);
+        authUser.following.push(user);
         await authUser.save();
-        targetUser.followers.push(authUser);
-        await targetUser.save();
+        user.followers.push(authUser);
+        await user.save();
 
         const updatedAuthUser = await User.findById(authUserId).populate('following followers');
-        const updatedTargetUser = await User.findById(userId).populate('following followers');
+        const updatedUser = await User.findById(userId).populate('following followers');
 
         res.status(200).json({
             message: `Following ${username}`,
             authUser: updatedAuthUser,
-            targetUser: updatedTargetUser,
+            user: updatedUser,
         });
 
 
     } catch (error) {
         console.error("Error following user:", error);
         return res.status(500).send({
-            message: "An error occurd following user",
+            message: "An error occurred following user",
             error: error.message,
         });
     }
     
 })
 
+// Unfollow User
 const unfollowUser = asyncHandler(async(req, res) => {
     try {
         const { username } = req.params;
@@ -161,31 +169,41 @@ const unfollowUser = asyncHandler(async(req, res) => {
             return res.status(404).send({ message: "Authenticated user not found" });
         }       
 
-        const targetUser = await User.findOne({ username }).select('_id');
-        if (!targetUser || targetUser._id !== userId) {
-            return res.status(404).send({ message: "Target user not found" });
-        
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ message: " user not found" });        
         }
 
-        if (!authUser.following.includes(targetUser._id)) {
-            return res.status(400).send({ message: "You are not following this user" });
+        if (user._id.toString() === authUser._id.toString()) {
+            return res.status(400).send({ message: "You can't unfollow yourself"});
         }
 
-        authUser.following.push(targetUser);
+        if (!authUser.following.includes(user._id)) {
+            return res.status(400).send({ message: "You aren't following this user" });
+        }        
+
+        authUser.following.pull(user);
         await authUser.save();
-        targetUser.followers.push(authUser._id);
-        await targetUser.save();
+        user.followers.pull(authUser);
+        await user.save();
+
+        const updatedAuthUser = await User.findById(authUserId).populate('following followers');
+        const updatedUser = await User.findById(userId).populate('following followers');
 
         res.status(200).json({
-            message: `Unfollowed ${username}`
+            message: `UnFollowed ${username}`,
+            authUser: updatedAuthUser,
+            user: updatedUser,
         });
+
+
     } catch (error) {
         console.error("Error unfollowing user:", error);
         return res.status(500).send({
-            message: "An error occurd unfollowing user",
+            message: "An error occurred unfollowing user",
             error: error.message,
         });
-    }    
+    }
 })
 
 module.exports = { registerUser, authUser, getProfile, followUser, unfollowUser }
