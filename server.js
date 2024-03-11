@@ -5,6 +5,7 @@ const connectDB = require('./db/connectDB');
 const auth = require('./middleware/auth');
 const { notFound, errorHandler } = require('./middleware/errors')
 const userRoutes = require('./routes/userRoutes');
+const patternRoutes = require('./routes/patternRoutes');
 
 const User = require('./db/models/User');
 
@@ -39,6 +40,7 @@ app.get("/authtest", auth, (req, res) => {
 });
 
 app.use("/users", userRoutes)
+app.use("/wips", patternRoutes)
 
 app.use(notFound);
 app.use(errorHandler);
