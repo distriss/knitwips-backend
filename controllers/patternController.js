@@ -14,6 +14,12 @@ const newPattern = asyncHandler(async(req, res) => {
         }
         const userId = user._id;
 
+        if (description && description.length > 150) {
+            return res.status(400).json({
+                message: "Description should not exceed 150 characters."
+            })
+        }
+
         const pattern = await Pattern.create({
             title,
             description,
@@ -31,6 +37,7 @@ const newPattern = asyncHandler(async(req, res) => {
                 description: pattern.description,
                 needleSize: pattern.needleSize,
                 yarnWeight: pattern.yarnWeight,
+                image: pattern.image,
                 likes: pattern.likes,
                 private: pattern.private,
                 details: pattern.details,
@@ -76,5 +83,33 @@ const getPattern = asyncHandler(async(req, res) => {
     
 })
 
+// List of Patterns
+const getPatternList = asyncHandler(async(req, res) => {
+    try {
+        const filterOption = req.query.filter || 'latest';
+        let limit = parseInt(req.query.limit) || 9
+        let page = parseInt(req.query.page) || 1;
+        let skip = (page - 1) * limit;
 
-module.exports = { newPattern, }
+        let filter = { createdAt: -1 };
+        if (filterOption === 'likes') {
+            filter = { likes: -1 };
+        }
+
+        const total = await Pattern.countDocuments();
+        const patterns = await Pattern.find().sort(filter).skip(skip).limit(limit);
+        res.status(200).json({
+            message: "Success Fetching Patterns",
+            patterns: patterns,
+            total: total,
+        });
+    } catch (error) {
+        res.status(500).send({ 
+            message: "Error fetching latest patterns", 
+            error: error.message,
+        })
+    }
+});
+
+
+module.exports = { newPattern, getPattern, getPatternList }
