@@ -97,7 +97,12 @@ const getPatternList = asyncHandler(async(req, res) => {
         }
 
         const total = await Pattern.countDocuments();
-        const patterns = await Pattern.find().sort(filter).skip(skip).limit(limit);
+        const patterns = await Pattern.find()
+            .sort(filter)
+            .skip(skip)
+            .limit(limit)
+            .populate('user', 'username');
+
         res.status(200).json({
             message: "Success Fetching Patterns",
             patterns: patterns,
@@ -111,5 +116,63 @@ const getPatternList = asyncHandler(async(req, res) => {
     }
 });
 
+// Like & Unlike Pattern
+const likePattern = asyncHandler(async(req, res) => {
+    try {
+        const { patternId } = req.params;
+        const { authUserId } = req.body;
 
-module.exports = { newPattern, getPattern, getPatternList }
+        const authUser = await User.findById(authUserId);
+        if (!authUser) {
+            return res.status(404).send({ message: "Authenticated user not found" });
+        }
+
+        const pattern = await Pattern.findById(patternId);
+        if (!pattern) {
+            return res.status(404).send({ message: "Pattern not found" });
+        }
+
+        const isLiked = authUser.likedPatterns.includes(patternId);
+        if (!isLiked) {
+            authUser.likedPatterns.push(pattern._id);
+            pattern.likes++
+
+            await authUser.save();
+            await pattern.save();
+            
+            
+
+            res.status(200).json({
+                message: `${pattern._id} added to Liked Patterns`,
+                authUser: authUser,
+                newLikesCount: pattern.likes,          
+            });
+
+        } else if (isLiked) {
+            authUser.likedPatterns.pull(pattern._id);
+            pattern.likes--
+            
+            await authUser.save();
+            await pattern.save();
+            
+
+            res.status(200).json({
+                message: `Unliked ${pattern._id}`,
+                authUser: authUser,
+                newLikesCount: pattern.likes,
+            })
+        }
+
+        
+        
+    } catch (error) {
+        console.error("Error liking/unliking pattern:", error );
+        return res.status(500).send({
+            message: "An error occurred liking or unliking pattern",
+            error: error.message,
+        });
+    }
+})
+
+
+module.exports = { newPattern, getPattern, getPatternList, likePattern }

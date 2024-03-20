@@ -25,6 +25,14 @@ const UserSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
     }],
+    likedPatterns: [{
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Pattern',
+    }],
+    savedPatterns: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Pattern',
+    }],
     isAdmin: {
         type: Boolean,
         required: true,

@@ -30,6 +30,8 @@ const registerUser = asyncHandler(async (req, res) => {
                 email: user.email,
                 following: user.following,
                 followers: user.followers,
+                likedPatterns: user.likedPatterns,
+                savedPatterns: user.savedPatterns,
                 isAdmin: user.isAdmin,
             },
             token, 
@@ -66,6 +68,8 @@ const authUser = asyncHandler(async(req, res) => {
                 email: user.email,
                 following: user.following,
                 followers: user.followers,
+                likedPatterns: user.likedPatterns,
+                savedPatterns: user.savedPatterns,
                 isAdmin: user.isAdmin,
             },
             token, 
@@ -97,6 +101,8 @@ const getProfile = asyncHandler(async(req, res) => {
                 username: user.username,
                 following: user.following,
                 followers: user.followers,
+                likedPatterns: user.likedPatterns,
+                savedPatterns: user.savedPatterns,
             },
         });
     } catch (error) {
@@ -162,7 +168,7 @@ const followUser = asyncHandler(async(req, res) => {
 const unfollowUser = asyncHandler(async(req, res) => {
     try {
         const { username } = req.params;
-        const { authUserId, userId } = req.body
+        const { authUserId, userId } = req.body;
 
         const authUser = await User.findById(authUserId)
         if (!authUser) {
