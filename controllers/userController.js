@@ -115,7 +115,7 @@ const getProfile = asyncHandler(async(req, res) => {
     
 })
 
-// Follow User
+// Follow & Unfollow User
 const followUser = asyncHandler(async(req, res) => {
     try {
         const { username } = req.params;
@@ -134,82 +134,48 @@ const followUser = asyncHandler(async(req, res) => {
         if (user._id.toString() === authUser._id.toString()) {
             return res.status(400).send({ message: "You can't follow yourself"});
         }
+        
+        const isFollowing = authUser.following.includes(user._id);
 
-        if (authUser.following.includes(user._id)) {
-            return res.status(400).send({ message: "You are already following this user" });
-        }        
+        if (!isFollowing) {
+            authUser.following.push(user);            
+            user.followers.push(authUser);
 
-        authUser.following.push(user);
-        await authUser.save();
-        user.followers.push(authUser);
-        await user.save();
+            await authUser.save();
+            await user.save();
 
-        const updatedAuthUser = await User.findById(authUserId).populate('following followers');
-        const updatedUser = await User.findById(userId).populate('following followers');
+            const updatedAuthUser = await User.findById(authUserId).populate('following followers');
+            const updatedUser = await User.findById(userId).populate('following followers');
 
-        res.status(200).json({
-            message: `Following ${username}`,
-            authUser: updatedAuthUser,
-            user: updatedUser,
-        });
+            res.status(200).json({
+                message: `Following ${username}`,
+                authUser: updatedAuthUser,
+                user: updatedUser,
+            });
 
+        } else if (isFollowing) {
+            authUser.following.pull(user);
+            await authUser.save();
+            user.followers.pull(authUser);
+            await user.save();
 
-    } catch (error) {
-        console.error("Error following user:", error);
-        return res.status(500).send({
-            message: "An error occurred following user",
-            error: error.message,
-        });
-    }
-    
-})
+            const updatedAuthUser = await User.findById(authUserId).populate('following followers');
+            const updatedUser = await User.findById(userId).populate('following followers');
 
-// Unfollow User
-const unfollowUser = asyncHandler(async(req, res) => {
-    try {
-        const { username } = req.params;
-        const { authUserId, userId } = req.body;
-
-        const authUser = await User.findById(authUserId)
-        if (!authUser) {
-            return res.status(404).send({ message: "Authenticated user not found" });
-        }       
-
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).send({ message: " user not found" });        
+            res.status(200).json({
+                message: `UnFollowed ${username}`,
+                authUser: updatedAuthUser,
+                user: updatedUser,
+            });
         }
-
-        if (user._id.toString() === authUser._id.toString()) {
-            return res.status(400).send({ message: "You can't unfollow yourself"});
-        }
-
-        if (!authUser.following.includes(user._id)) {
-            return res.status(400).send({ message: "You aren't following this user" });
-        }        
-
-        authUser.following.pull(user);
-        await authUser.save();
-        user.followers.pull(authUser);
-        await user.save();
-
-        const updatedAuthUser = await User.findById(authUserId).populate('following followers');
-        const updatedUser = await User.findById(userId).populate('following followers');
-
-        res.status(200).json({
-            message: `UnFollowed ${username}`,
-            authUser: updatedAuthUser,
-            user: updatedUser,
-        });
-
-
+        
     } catch (error) {
-        console.error("Error unfollowing user:", error);
+        console.error("Error following/unfollowing user:", error);
         return res.status(500).send({
-            message: "An error occurred unfollowing user",
+            message: "An error occurred following/unfollowing user",
             error: error.message,
         });
     }
 })
 
-module.exports = { registerUser, authUser, getProfile, followUser, unfollowUser }
+module.exports = { registerUser, authUser, getProfile, followUser }

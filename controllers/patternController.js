@@ -138,9 +138,7 @@ const likePattern = asyncHandler(async(req, res) => {
             pattern.likes++
 
             await authUser.save();
-            await pattern.save();
-            
-            
+            await pattern.save();  
 
             res.status(200).json({
                 message: `${pattern._id} added to Liked Patterns`,
@@ -154,7 +152,6 @@ const likePattern = asyncHandler(async(req, res) => {
             
             await authUser.save();
             await pattern.save();
-            
 
             res.status(200).json({
                 message: `Unliked ${pattern._id}`,
@@ -162,9 +159,7 @@ const likePattern = asyncHandler(async(req, res) => {
                 newLikesCount: pattern.likes,
             })
         }
-
-        
-        
+         
     } catch (error) {
         console.error("Error liking/unliking pattern:", error );
         return res.status(500).send({
