@@ -59,7 +59,7 @@ const getPattern = asyncHandler(async(req, res) => {
     const { username, patternId } = req.params;
 
     try {
-        const user = await User.findOne({ username: username });
+        const user = await User.findOne({ username });
         if (!user) {
             return res.status(404).json({ 
                 message: "User not found" 
@@ -112,7 +112,7 @@ const getPatternList = asyncHandler(async(req, res) => {
         res.status(500).send({ 
             message: "Error fetching latest patterns", 
             error: error.message,
-        })
+        });
     }
 });
 
@@ -157,9 +157,9 @@ const likePattern = asyncHandler(async(req, res) => {
                 message: `Unliked ${pattern._id}`,
                 authUser: authUser,
                 newLikesCount: pattern.likes,
-            })
+            });
         }
-         
+
     } catch (error) {
         console.error("Error liking/unliking pattern:", error );
         return res.status(500).send({
@@ -167,7 +167,53 @@ const likePattern = asyncHandler(async(req, res) => {
             error: error.message,
         });
     }
-})
+});
 
 
-module.exports = { newPattern, getPattern, getPatternList, likePattern }
+// Save to & Remove from Library
+const savePattern = asyncHandler(async(req, res) => {
+    try {
+        const { patternId } = req.params;
+        const { authUserId} = req.body;
+
+        const authUser = await User.findById(authUserId);
+        if (!authUser) {
+            return res.status(404).send({ message: "Authenticated user not found" });
+        }
+
+        const pattern = await Pattern.findById(patternId);
+        if (!pattern) {
+            return res.status(404).send({ message: "Pattern not found" });
+        }
+
+        const isSaved = authUser.savedPatterns.includes(patternId);
+        if (!isSaved) {
+            authUser.savedPatterns.push(pattern._id);
+
+            await authUser.save();
+
+            res.status(200).json({
+                message: `${pattern._id} saved to Library`,
+                authUser: authUser,
+            });
+        
+        } else if (isSaved) {
+            authUser.savedPatterns.pull(pattern._id);
+
+            await authUser.save();
+            
+            res.status(200).json({
+                message: `${pattern._id} removed from Library`,
+                authUser: authUser,
+            });
+        }
+    } catch (error) {
+        console.error("Error saving/removing pattern from library: ", error );
+        return res.status(500).send({
+            message: "An error occurred saving or removing pattern from library",
+        });
+    }
+});
+
+
+module.exports = { newPattern, getPattern, getPatternList, likePattern, savePattern }
