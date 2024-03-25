@@ -116,6 +116,27 @@ const getPatternList = asyncHandler(async(req, res) => {
     }
 });
 
+// Featured Patterns List
+const getFeaturedList = asyncHandler(async(req, res) => {
+    try {
+        let limit = 3
+        let filter = { likes: -1 };
+
+        const patterns = await Pattern.find().sort(filter).limit(limit).populate('user', 'username');
+
+        res.status(200).json({
+            message: "Success Fetching Featured Patterns",
+            patterns: patterns,
+        });
+    } catch (error) {
+        res.status(500).send({
+            message: "Error fetching featured patterns",
+            error: error.message,
+        });
+    }
+})
+
+
 // Like & Unlike Pattern
 const likePattern = asyncHandler(async(req, res) => {
     try {
@@ -216,4 +237,4 @@ const savePattern = asyncHandler(async(req, res) => {
 });
 
 
-module.exports = { newPattern, getPattern, getPatternList, likePattern, savePattern }
+module.exports = { newPattern, getPattern, getPatternList, likePattern, savePattern, getFeaturedList }
