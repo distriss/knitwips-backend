@@ -23,7 +23,7 @@ const PatternSchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        default: 'https://res.cloudinary.com/dzgmbioat/image/upload/v1710417928/wip-default_ttr2r5.png'
+        default: 'https://res.cloudinary.com/dzgmbioat/image/upload/v1711461806/wips-default_pngayw.png'
     },
     private: {
         type: Boolean,
